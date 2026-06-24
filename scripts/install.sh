@@ -641,7 +641,7 @@ attempt_install_git() {
                     $sudo_cmd env DEBIAN_FRONTEND=noninteractive apt-get update -qq >/dev/null 2>&1 || true
                     $sudo_cmd env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq git >/dev/null 2>&1 || true
                     ;;
-                fedora)
+                fedora|rhel|centos|rocky|alma|ol)
                     log_info "Installing Git via dnf..."
                     $sudo_cmd dnf install -y git >/dev/null 2>&1 || true
                     ;;
@@ -698,7 +698,7 @@ check_git() {
                 ubuntu|debian)
                     log_info "  sudo apt update && sudo apt install git"
                     ;;
-                fedora)
+                fedora|rhel|centos|rocky|alma|ol)
                     log_info "  sudo dnf install git"
                     ;;
                 arch)
@@ -1006,7 +1006,7 @@ install_system_packages() {
     local pkg_install=""
     case "$DISTRO" in
         ubuntu|debian) pkg_install="apt install -y"   ;;
-        fedora)        pkg_install="dnf install -y"   ;;
+        fedora|rhel|centos|rocky|alma|ol) pkg_install="dnf install -y" ;;
         arch)          pkg_install="pacman -S --noconfirm" ;;
     esac
 
@@ -1962,7 +1962,7 @@ install_node_deps() {
                         log_warn "Playwright browser installation failed — browser tools will not work."
                     }
                     ;;
-                fedora|rhel|centos|rocky|alma)
+                fedora|rhel|centos|rocky|alma|ol)
                     log_warn "Playwright does not support automatic dependency installation on RPM-based systems."
                     log_info "Install Chromium system dependencies manually before using browser tools:"
                     log_info "  sudo dnf install nss atk at-spi2-core cups-libs libdrm libxkbcommon mesa-libgbm pango cairo alsa-lib"
@@ -2273,7 +2273,7 @@ ensure_browser() {
                 arch)
                     log_info "Try: sudo pacman -S chromium"
                     ;;
-                fedora|rhel|centos)
+                fedora|rhel|centos|rocky|alma|ol)
                     log_info "Try: sudo dnf install -y chromium"
                     ;;
             esac
