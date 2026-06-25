@@ -3309,7 +3309,7 @@ def quarantine_bundle(bundle: SkillBundle) -> Path:
     dest = QUARANTINE_DIR / skill_name
     if dest.exists():
         shutil.rmtree(dest)
-    dest.mkdir(parents=True)
+    dest.mkdir(parents=True, exist_ok=True)
 
     for rel_path, file_content in validated_files:
         file_dest = dest.joinpath(*rel_path.split("/"))
