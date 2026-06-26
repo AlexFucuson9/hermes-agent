@@ -635,7 +635,7 @@ def create_task(payload: CreateTaskBody, board: Optional[str] = Query(None)):
                 pass
         return body
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     finally:
         conn.close()
 
@@ -754,7 +754,7 @@ async def upload_task_attachment(
         att = kanban_db.get_attachment(conn, att_id)
         return {"attachment": _attachment_dict(att) if att else None}
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     finally:
         conn.close()
 
@@ -834,7 +834,7 @@ def update_task(task_id: str, payload: UpdateTaskBody, board: Optional[str] = Qu
                     conn, task_id, payload.assignee or None,
                 )
             except RuntimeError as e:
-                raise HTTPException(status_code=409, detail=str(e))
+                raise HTTPException(status_code=409, detail=str(e)) from e
             if not ok:
                 raise HTTPException(status_code=404, detail="task not found")
 
@@ -1122,7 +1122,7 @@ def add_link(payload: LinkBody, board: Optional[str] = Query(None)):
         kanban_db.link_tasks(conn, payload.parent_id, payload.child_id)
         return {"ok": True}
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     finally:
         conn.close()
 

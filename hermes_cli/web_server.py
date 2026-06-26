@@ -7652,7 +7652,7 @@ async def rename_session_endpoint(session_id: str, body: SessionRename):
                 db.set_session_title(sid, body.title or "")
             except ValueError as e:
                 # Title too long, invalid characters, or already in use.
-                raise HTTPException(status_code=400, detail=str(e))
+                raise HTTPException(status_code=400, detail=str(e)) from e
         if body.archived is not None:
             db.set_session_archived(sid, body.archived)
         result = {"ok": True, "title": db.get_session_title(sid) or ""}
@@ -7801,7 +7801,7 @@ def _cron_profile_home(profile: Optional[str]) -> Tuple[str, Path]:
         canon = profiles_mod.normalize_profile_name(raw)
         profiles_mod.validate_profile_name(canon)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     if not profiles_mod.profile_exists(canon):
         raise HTTPException(status_code=404, detail=f"Profile '{canon}' does not exist.")
     return canon, profiles_mod.get_profile_dir(canon)
@@ -9868,7 +9868,7 @@ def _resolve_profile_dir(name: str) -> Path:
     try:
         profiles_mod.validate_profile_name(name)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     if not profiles_mod.profile_exists(name):
         raise HTTPException(status_code=404, detail=f"Profile '{name}' does not exist.")
     return profiles_mod.get_profile_dir(name)
@@ -10149,9 +10149,9 @@ async def set_active_profile_endpoint(body: ProfileActiveUpdate):
     try:
         profiles_mod.set_active_profile(body.name)
     except FileNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         _log.exception("POST /api/profiles/active failed")
         raise HTTPException(status_code=500, detail=str(e))
@@ -10206,9 +10206,9 @@ async def open_profile_terminal_endpoint(name: str):
                     detail="No supported terminal emulator found",
                 )
     except FileNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except HTTPException:
         raise
     except Exception as e:
@@ -10223,7 +10223,7 @@ async def rename_profile_endpoint(name: str, body: ProfileRename):
     try:
         path = profiles_mod.rename_profile(name, body.new_name)
     except FileNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except (ValueError, FileExistsError) as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -10241,9 +10241,9 @@ async def delete_profile_endpoint(name: str):
     try:
         path = profiles_mod.delete_profile(name, yes=True)
     except FileNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         _log.exception("DELETE /api/profiles/%s failed", name)
         raise HTTPException(status_code=500, detail=str(e))
@@ -10257,7 +10257,7 @@ async def get_profile_soul(name: str):
         try:
             return {"content": soul_path.read_text(encoding="utf-8"), "exists": True}
         except OSError as e:
-            raise HTTPException(status_code=500, detail=f"Could not read SOUL.md: {e}")
+            raise HTTPException(status_code=500, detail=f"Could not read SOUL.md: {e}") from e
     return {"content": "", "exists": False}
 
 
@@ -10944,7 +10944,7 @@ async def update_config_raw(body: RawConfigUpdate, profile: Optional[str] = None
             save_config(parsed)
         return {"ok": True}
     except yaml.YAMLError as e:
-        raise HTTPException(status_code=400, detail=f"Invalid YAML: {e}")
+        raise HTTPException(status_code=400, detail=f"Invalid YAML: {e}") from e
 
 
 # ---------------------------------------------------------------------------

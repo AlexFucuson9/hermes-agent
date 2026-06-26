@@ -43,7 +43,7 @@ def _scope_to_profile(profile: Optional[str]):
     try:
         profiles_mod.validate_profile_name(requested)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     if not profiles_mod.profile_exists(requested):
         raise HTTPException(status_code=404, detail=f"Profile '{requested}' does not exist.")
 
