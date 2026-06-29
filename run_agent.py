@@ -4530,7 +4530,21 @@ class AIAgent:
             cfg = load_config()
             provider = (getattr(self, "provider", "") or "").strip()
             model = (getattr(self, "model", "") or "").strip()
-            return _lookup_supports_vision(provider, model, cfg) is True
+            result = _lookup_supports_vision(provider, model, cfg)
+            if result is not None:
+                return result
+            # Providers that serve local models via an OpenAI-compatible API
+            # and natively support image_url content parts.  When the model
+            # is absent from models.dev (common for locally-served models),
+            # assume vision support so images are not silently stripped.
+            # Users can still override via
+            #   providers.<provider>.models.<model>.supports_vision: false
+            # in config.yaml if needed.
+            _VISION_OPTIMISTIC_PROVIDERS = frozenset({
+                "ollama", "vllm", "lmstudio", "llamafile",
+                "text-generation-webui", "koboldcpp", "tabbyapi",
+            })
+            return provider in _VISION_OPTIMISTIC_PROVIDERS
         except Exception:
             return False
 
