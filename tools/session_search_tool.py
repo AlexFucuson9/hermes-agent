@@ -689,7 +689,11 @@ def session_search(
     if isinstance(session_id, str) and session_id.strip():
         sid = session_id.strip()
         result = _read_session(db, sid)
-        if json.loads(result).get("success"):
+        try:
+            parsed = json.loads(result)
+        except (json.JSONDecodeError, TypeError):
+            return result
+        if parsed.get("success"):
             return result
 
         # Miss in the target profile — the model may have dropped the owning
@@ -699,6 +703,8 @@ def session_search(
         if located is not None:
             try:
                 found = json.loads(_read_session(located, sid))
+            except (json.JSONDecodeError, TypeError):
+                return result
             finally:
                 located.close()
             if found.get("success"):

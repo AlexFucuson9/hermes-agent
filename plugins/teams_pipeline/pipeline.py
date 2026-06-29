@@ -637,7 +637,10 @@ def _parse_summary_json(content: str) -> dict[str, Any]:
     end = text.rfind("}")
     if start >= 0 and end > start:
         text = text[start : end + 1]
-    payload = json.loads(text)
+    try:
+        payload = json.loads(text)
+    except (json.JSONDecodeError, ValueError):
+        return _heuristic_summary(text)
     return {
         "summary": str(payload.get("summary") or "").strip(),
         "key_decisions": [str(item).strip() for item in payload.get("key_decisions", []) if str(item).strip()],
