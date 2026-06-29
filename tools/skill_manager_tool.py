@@ -1006,12 +1006,18 @@ def _delete_skill(name: str, absorbed_into: Optional[str] = None) -> Dict[str, A
             message += f" Content absorbed into '{absorbed_target}'."
         return {"success": True, "message": message, "_archived": True}
 
-    shutil.rmtree(skill_dir)
+    try:
+        shutil.rmtree(skill_dir)
+    except OSError as e:
+        return {"success": False, "error": f"failed to delete '{name}': {e}"}
 
     # Clean up empty category directories (don't remove the skills root itself)
     parent = skill_dir.parent
     if parent != skills_root and parent.exists() and not any(parent.iterdir()):
-        parent.rmdir()
+        try:
+            parent.rmdir()
+        except OSError:
+            pass  # non-critical; dir may be non-empty from a concurrent write
 
     message = f"Skill '{name}' deleted."
     if is_consolidation:
