@@ -1145,7 +1145,7 @@ def discover_bedrock_models(
 
             # Only include active, streaming-capable, text-output models
             lifecycle = summary.get("modelLifecycle", {})
-            if lifecycle.get("status", "").upper() != "ACTIVE":
+            if (lifecycle.get("status") or "").upper() != "ACTIVE":
                 continue
             if not summary.get("responseStreamingSupported", False):
                 continue
