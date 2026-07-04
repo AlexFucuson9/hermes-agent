@@ -1987,6 +1987,11 @@ class MCPServerTask:
         handshake remains the source of truth for everything except the
         unambiguous "this is a web page, not MCP" case.
 
+        When HEAD/GET returns a non-MCP content type (e.g. ``text/html``),
+        a lightweight JSON-RPC ``initialize`` POST probe is attempted before
+        rejecting.  Some MCP servers serve a web UI on GET but only speak
+        Streamable HTTP via POST — the POST probe rescues those endpoints.
+
         Runs on its own httpx client OUTSIDE the SDK's anyio task group, so the
         raised error propagates as itself rather than being wrapped in an
         ``ExceptionGroup`` (which is what defeats hooks installed inside the
@@ -2026,6 +2031,28 @@ class MCPServerTask:
             return  # No content type advertised — don't second-guess the SDK.
         if ct_base in self._MCP_CONTENT_TYPES:
             return  # Looks like a real MCP endpoint.
+
+        # HEAD/GET returned a non-MCP content type (e.g. text/html from a
+        # web UI).  Some MCP servers only speak Streamable HTTP via POST —
+        # try a lightweight JSON-RPC ``initialize`` POST before rejecting.
+        try:
+            async with _httpx.AsyncClient(**client_kwargs) as client:
+                post_headers = {
+                    **probe_headers,
+                    "Content-Type": "application/json",
+                    "Accept": "application/json, text/event-stream",
+                }
+                init_body = '{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"hermes-preflight","version":"0"}}}'
+                post_resp = await client.post(
+                    url, headers=post_headers, content=init_body,
+                )
+        except _httpx.HTTPError:
+            return  # Network error on POST — let the SDK try.
+
+        if 200 <= post_resp.status_code < 300:
+            post_ct = post_resp.headers.get("content-type", "").split(";")[0].strip().lower()
+            if post_ct in self._MCP_CONTENT_TYPES:
+                return  # POST probe succeeded — endpoint is MCP.
 
         raise NonMcpEndpointError(
             f"MCP server '{self.name}' at {url} returned Content-Type "
