@@ -6243,6 +6243,14 @@ def _build_call_kwargs(
             or _is_nvidia_nim
         ):
             kwargs["max_tokens"] = max_tokens
+        else:
+            # For all other providers (OpenRouter, custom, OpenAI direct,
+            # Nous, Copilot, etc.), forward the cap using the correct
+            # wire-format field.  auxiliary_max_tokens_param() picks
+            # max_tokens vs max_completion_tokens per model/provider.
+            # The retry logic in call_llm() already handles providers
+            # that reject the param by stripping and retrying.  #60388
+            kwargs.update(auxiliary_max_tokens_param(max_tokens, model=model))
 
     if tools:
         # Defensive dedup: providers like Google Vertex, Azure, and Bedrock
