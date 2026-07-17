@@ -3840,6 +3840,12 @@ def _run_on_mcp_loop(coro_or_factory, timeout: float = 30):
         try:
             return future.result(timeout=wait_timeout)
         except concurrent.futures.TimeoutError:
+            # If the future has completed, the TimeoutError is the
+            # coroutine's own exception (e.g. asyncio.wait_for expiry),
+            # NOT a poll timeout — re-raise to avoid a tight spin that
+            # leaks traceback frames and causes OOM (issue #63892).
+            if future.done():
+                raise
             continue
 
 
